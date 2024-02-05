@@ -1,3 +1,5 @@
+from collections import deque
+
 from exceptions import UnsuitableBlock, EmptyColumn
 
 
@@ -5,11 +7,8 @@ class Block:
     def __init__(self, name: int):
         self.name = name
 
-    def __str__(self):
-        return f'{self.name}'
-
     def __repr__(self):
-        return self.__str__()
+        return f'{self.name}'
 
     def __lt__(self, other):
         if isinstance(other, type(self)):
@@ -22,61 +21,44 @@ class Block:
         return NotImplemented
 
 
-class Column:
-    def __init__(self, amount_blocks: int, first_block=False):
-        self.blocks = []
-        self.amount_blocks = amount_blocks
-        if first_block:
-            self.__add_starts_block()
+class Column(deque):
+    def __init__(self, maxlen: int=None,
+                 iterable: list=None,
+                 add_starts_block: bool=False):
+        if add_starts_block:
+            iterable = self.__starts_block(maxlen)
+        iterable = iterable if iterable is not None else []
+        super().__init__(iterable, maxlen)
 
-    def add_block(self, obj: Block):
-        if not self.is_empty() and self.blocks[-1] < obj:
+    def append(self, obj: Block):
+        if not self.is_empty() and self[-1] < obj:
             raise UnsuitableBlock
-        self.blocks.append(obj)
+        super().append(obj)
 
-    def is_empty(self):
-        return not bool(self.blocks)
+    def is_empty(self) -> bool:
+        return not bool(list(self))
 
-    def _is_full(self):
-        return bool(len(self.blocks) == self.amount_blocks)
-
-    @property
-    def upper_block(self):
-        if self.is_empty():
-            return Block(0)
-        upper_block = self.blocks[self.count_blocks() - 1]
-        return upper_block
-
-    def retrieve_block(self):
-        if self.is_empty():
-            raise EmptyColumn
-        block = self.blocks.pop()
-        return block
-
-    def __add_starts_block(self):
-        """adding starts blocks"""
-        for i in range(self.amount_blocks, 0, -1):
-            self.blocks.append(Block(i))
-
-    def __str__(self):
-        return f'{self.blocks + [0 for _ in range(self.amount_blocks - self.count_blocks())]}'
-
-    def count_blocks(self):
-        return len(self.blocks)
+    def __starts_block(self, maxlen: int) -> list[Block]:
+        """Adding starts blocks."""
+        starts_blocks = []
+        for i in range(maxlen, 0, -1):
+            starts_blocks.append(Block(i))
+        return starts_blocks
 
     def __repr__(self):
-        return self.__str__()
+        empty_places = [0] * (self.maxlen - len(self))
+        return f'{list(self) + empty_places}'
+
 
 class HanoiTower:
     def __init__(self, amount_blocks):
         self.amount_blocks = amount_blocks
-        self.column_1 = Column(amount_blocks, first_block=True)
-        self.column_2 = Column(amount_blocks)
-        self.column_3 = Column(amount_blocks)
+        self.column_1 = Column(maxlen=amount_blocks, add_starts_block=True)
+        self.column_2 = Column(maxlen=amount_blocks)
+        self.column_3 = Column(maxlen=amount_blocks)
         self.columns = [self.column_1, self.column_2, self.column_3]
 
-
-    def __str__(self):
+    def __repr__(self):
         columns = [
             self.column_1,
             self.column_2,
@@ -87,6 +69,3 @@ class HanoiTower:
         for column in columns:
             message += f'{column} \n'
         return message
-
-    def __repr__(self):
-        return self.__str__()

@@ -6,6 +6,7 @@ class UnsuitableBlock(BaseException):
     def __str__(self):
         return self.message
 
+
 class EmptyColumn(BaseException):
     def __str__(self):
         return 'Empty column'
